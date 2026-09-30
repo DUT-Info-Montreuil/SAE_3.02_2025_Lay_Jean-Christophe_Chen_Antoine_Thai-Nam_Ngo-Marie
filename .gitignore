@@ -1,1 +1,23 @@
+# IDE / OS
 /.idea/
+/.vscode/
+*.swp
+*~
+.DS_Store
+Thumbs.db
+
+# Secrets / local config
+.env
+.env.*
+!.env.example
+
+# Dependencies (if Composer / npm are introduced later)
+/vendor/
+/node_modules/
+
+# Logs, caches, temp
+*.log
+/tmp/
+.phpunit.result.cache
+.php-cs-fixer.cache
+.claude/settings.local.json

@@ -107,3 +107,21 @@ Hors domaines : `documentsArendre/`, `documentsLegaux/` (données personnelles),
 - Expliquer tout changement de dépendance (ajout, mise à jour, suppression, version CDN) dans la PR.
 - Ne pas modifier `documentsArendre/` ni `documentsLegaux/` sans demande explicite.
 - Répondre en français.
+
+## Journal d'initialisation (vérification de l'environnement)
+Environnement : PHP 8.4.19, Composer et Node 22 disponibles.
+
+Commandes exécutées et résultats :
+- `ls composer.json package.json phpunit.xml*` → aucun de ces fichiers n'existe : **aucune dépendance à installer**.
+- `find . -name '*.php' -not -path './.git/*' | wc -l` → 50 fichiers PHP.
+- `for f in $(find . -name '*.php' -not -path './.git/*'); do php -l "$f" >/dev/null || echo "FAIL $f"; done`
+  → **0 erreur de syntaxe** (seul « test » disponible : il n'y a ni PHPUnit ni dossier `tests/`).
+- Application non lancée : aucune base MySQL dans l'environnement.
+
+Problèmes rencontrés / points d'attention :
+- Pas de tests automatisés ni de gestionnaire de dépendances.
+- `Connexion.php` contient des identifiants BDD en clair, présents dans l'historique git : à déplacer vers des
+  variables d'environnement (modèle : `.env.example`, pas encore lu par le code) et à faire changer côté serveur.
+- `.gitignore` complété et `.env.example` ajouté (ce dernier documente la config attendue, sans secret).
+- `modules/mod_asso/logos/.9png` : nom de fichier suspect (probablement un `.png` mal nommé).
+- La branche distante `s5_ai_coding` contenait déjà un `CLAUDE.md` (et `docs/API.md`) : conservés, cette section y est ajoutée.
