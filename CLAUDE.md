@@ -106,6 +106,7 @@ Hors domaines : `documentsArendre/`, `documentsLegaux/` (données personnelles),
 - Lancer les tests (et le contrôle de syntaxe `php -l`) avant d'ouvrir une PR.
 - Expliquer tout changement de dépendance (ajout, mise à jour, suppression, version CDN) dans la PR.
 - Ne pas modifier `documentsArendre/` ni `documentsLegaux/` sans demande explicite.
+- **En cas de doute, quel qu'il soit** (périmètre, choix technique, comportement attendu, ambiguïté d'une consigne…), **poser la question à l'équipe** au lieu de trancher seul.
 - Répondre en français.
 
 ## Journal d'initialisation (vérification de l'environnement)
