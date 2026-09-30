@@ -37,6 +37,48 @@ voulu et injecte son rendu dans `template.php`.
 - `documentsArendre/` : livrables (notice, rapport, MCD/MLD, personas). `documentsLegaux/` : pièces
   des associations. Ne pas modifier ces deux dossiers.
 
+## Domaines
+
+Un domaine couvre **soit le front, soit le back**, jamais les deux.
+
+### Back
+
+| Domaine | Dossiers / fichiers |
+|---|---|
+| Bootstrap & routage global | `index.php` |
+| Accès BDD & requêtes communes | `Connexion.php`, `modele.php` |
+| Sécurité (CSRF) | `token.php`, `abstractToken.php` |
+| Authentification / connexion | `Composants/mod_connexion/{mod,cont,modele}_connexion.php` |
+| Navigation (logique de la navbar) | `Composants/comp_navbar/{comp,cont,modele}_navbar.php` |
+| Landing page (logique) | `modules/landingPage/{mod,cont}_landingPage.php` |
+| Associations | `modules/mod_asso/{mod,cont,modele}_asso.php` |
+| Administration | `modules/mod_admin/{mod,cont,modele}_admin.php` |
+| Comptes utilisateurs | `modules/mod_compte/{mod,cont,modele}_compte.php` |
+| Produits | `modules/mod_produit/{mod,cont,modele}_produit.php` |
+| Stock | `modules/mod_stock/{mod,cont,modele}_stock.php` |
+| Fournisseurs | `modules/mod_fournisseur/{mod,cont,modele}_fournisseur.php` |
+| Panier | `modules/mod_panier/{mod,cont,modele}_panier.php` |
+| Commandes | `modules/mod_commande/{mod,cont,modele}_commande.php` |
+
+### Front
+
+| Domaine | Dossiers / fichiers |
+|---|---|
+| Gabarit global & styles | `template.php`, `style.css`, `vue_generique.php` |
+| Vue connexion | `Composants/mod_connexion/vue_connexion.php` |
+| Vue navbar | `Composants/comp_navbar/vue_navbar.php` |
+| Vue landing page | `modules/landingPage/vue_landingPage.php`, `img_landingPage/` |
+| Vues associations | `modules/mod_asso/vue_asso.php`, `logos/` |
+| Vues administration | `modules/mod_admin/vue_admin.php` |
+| Vues comptes | `modules/mod_compte/vue_compte.php` |
+| Vues produits | `modules/mod_produit/vue_produit.php`, `img_produits/` |
+| Vues stock | `modules/mod_stock/vue_stock.php` |
+| Vues fournisseurs | `modules/mod_fournisseur/vue_fournisseur.php` |
+| Vues panier | `modules/mod_panier/vue_panier.php` |
+| Vues commandes | `modules/mod_commande/vue_commande.php` |
+
+Hors domaines : `documentsArendre/`, `documentsLegaux/` (données personnelles), `.idea/`.
+
 ## Conventions
 ### Nommage
 - Par module : `mod_X.php` (routeur), `cont_X.php` (contrôleur), `modele_X.php`, `vue_X.php`.
@@ -56,6 +98,8 @@ voulu et injecte son rendu dans `template.php`.
 - Attention : `Connexion.php` contient des identifiants BDD en clair, à ne pas propager.
 
 ## Règles de travail
+- **Ne travailler que dans un seul périmètre (domaine) à la fois**, selon le tableau « Domaines ». Ne lire ni les dépendances installées (`vendor/`, `node_modules/`), ni les fichiers de verrouillage (`composer.lock`, `package-lock.json`…), ni les données, logs ou fichiers générés (uploads, images, PDF, dumps).
+- Si le front et le back doivent communiquer, s'appuyer sur `docs/API.md` (quand il existera) plutôt que sur une lecture complète de l'autre partie du projet. En attendant, lire uniquement la signature de la méthode de vue appelée par le contrôleur (`VueX::afficherXxx(...)`).
 - Ne jamais committer de secret (mot de passe, identifiant BDD, clé) ; ne pas en ajouter dans le code ni dans `CLAUDE.md`.
 - Créer une branche et une PR par modification, jamais de push direct sur la branche principale.
 - Accompagner tout correctif de sécurité d'un test qui reproduit la faille.
