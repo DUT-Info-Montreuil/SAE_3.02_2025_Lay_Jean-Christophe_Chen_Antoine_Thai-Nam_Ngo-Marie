@@ -3,8 +3,9 @@
 cd "$(dirname "$0")/../.." || exit 2
 ko=0
 for t in tests/securite/test_*.php; do
+  case "$t" in *test_schema_bdd.php) [ -n "$DUMP_SQL" ] || { echo "(ignoré : définir DUMP_SQL=dump.sql pour $t)"; continue; } ;; esac
   echo "=================== $t"
-  php -d display_errors=0 "$t" || ko=$((ko+1))
+  php -d display_errors=0 "$t" ${DUMP_SQL:+"$DUMP_SQL"} || ko=$((ko+1))
 done
 echo; echo "$ko script(s) signalent des failles"
 exit $ko

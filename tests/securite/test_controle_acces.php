@@ -62,4 +62,10 @@ $pdo->exec("INSERT INTO role VALUES (40,1,'Gestionnaire')");
 (new ModeleAdmin())->accepterDemandeUtilisateur(40, 1);      // appel exact de cont_admin.php:93-96 avec ?id=40
 $r = $pdo->query("SELECT role FROM role WHERE idUtilisateur=40")->fetchColumn();
 verdict('CA-5', "accepterDemande sur un Gestionnaire : son rôle devient « $r » (aucun filtre role='enCours')", $r === 'Client');
+// ---- CA-6 : un gestionnaire peut retirer le rôle Admin (rattaché à l'asso 1 dans le dump fourni)
+$pdo->exec("INSERT INTO utilisateurs(id,login) VALUES (1,'admin')");
+$pdo->exec("INSERT INTO role VALUES (1,1,'Admin')");
+(new ModeleAdmin())->deleteUtilisateur(1, 1);        // appel exact de cont_admin.php:71 avec ?id=1 et asso=1 ; aucun contrôle du rôle de la cible
+$admin = (int)$pdo->query("SELECT COUNT(*) FROM role WHERE role='Admin'")->fetchColumn();
+verdict('CA-6', 'bannirUtilisateur sur l\'Admin : son rôle est supprimé (cont_admin.php:66-76 ne teste pas le rôle de la cible)', $admin === 0);
 fin();

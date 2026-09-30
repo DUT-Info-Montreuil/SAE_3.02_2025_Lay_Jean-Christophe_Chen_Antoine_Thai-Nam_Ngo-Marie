@@ -12,7 +12,7 @@ php tests/securite/test_xss.php             # un seul script
 - PHP 8.x suffit, avec `pdo_sqlite` pour les tests qui exécutent les contrôleurs. Il n'y a pas de MySQL, pas de réseau, pas de Composer.
 - Chaque ligne est `[VULNÉRABLE]` (la faille est présente) ou `[OK]`. Le code de sortie vaut 1 si une faille est détectée.
 - Les tests ne cassent rien. Les contrôleurs tournent sur une base SQLite en mémoire qui remplace `Connexion::$bdd`. Les marqueurs XSS sont inoffensifs (`<i id="marqueur-xss">`). Le seul serveur lancé est `php -S` sur 127.0.0.1, en requête HEAD.
-- Le schéma SQLite est déduit des requêtes (le schéma MySQL n'est pas versionné). Un test peut donc dépendre du vrai schéma : c'est indiqué quand c'est le cas.
+- Le schéma SQLite des tests est déduit des requêtes. Le dump MySQL fourni (`dutinfopw201668.sql`) a ensuite servi à lever les incertitudes : voir la section 9. Ce dump contient des données personnelles et des hachages : **ne pas le committer**. Le test `test_schema_bdd.php` ne lit que sa structure : `DUMP_SQL=chemin/dump.sql ./tests/securite/run_all.sh`.
 - Après correction d'une faille, son test doit passer à `[OK]`. Cela respecte la règle du `CLAUDE.md` : un test accompagne chaque correctif.
 
 Légende. **Certitude** : *Confirmée* = exécutée par un test. *Haute* = lue dans le code, non exécutable sans MySQL. *Moyenne* = dépend d'un élément non versionné.
@@ -27,7 +27,7 @@ Légende. **Certitude** : *Confirmée* = exécutée par un test. *Haute* = lue d
 | Erreur PDO : mot de passe affiché | **Infirmé sur PHP ≥ 8.2**. PDO masque ses arguments dans la trace (`SensitiveParameterValue`). Seuls l'hôte et l'utilisateur fuient (SEC-5). Le mot de passe en clair dans git reste grave (SEC-1). |
 | Vue commande « à vérifier » | **Faille confirmée** (XSS-6). |
 
-**Non listé dans le document** : CA-1, CA-4, CA-5, UP-1, UP-4, XSS-1, XSS-2, XSS-4, XSS-6, LM-4, LM-5, AUTH-8.
+**Non listé dans le document** : CA-1, CA-4, CA-5, CA-6, UP-1, UP-4, XSS-1, XSS-2, XSS-4, XSS-6, LM-4, LM-5, AUTH-8, AUTH-9 et la section 9.
 
 ---
 
@@ -89,6 +89,7 @@ Cause commune : les vues construisent du HTML par concaténation, et `htmlspecia
 | AUTH-6 | Énumération de logins (« le login X existe déjà ») | `cont_connexion.php:50` | Faible | Confirmée |
 | AUTH-7 | Déconnexion par GET sans jeton | `modele_navbar.php:67` | Faible | Confirmée |
 | AUTH-8 | `!=` au lieu de `hash_equals` pour le jeton CSRF | `token.php:19` | Faible | Confirmée |
+| AUTH-9 | `utilisateurs.login` non unique en base : deux inscriptions simultanées peuvent créer deux comptes au même login (`verifLoginExiste` puis `INSERT` non atomiques). `getUtilisateur` ne lit que la première ligne | `modele_connexion.php:11-26`, schéma | Moyenne | Haute (schéma confirmé par le dump, course non exécutée) |
 
 **AUTH-8, démonstration** : avec un jeton de la forme `0e<chiffres>`, `Token::verifierToken('0')` renvoie `true`. La probabilité est de l'ordre de 1 sur 10 000, mais le défaut est réel.
 
@@ -132,6 +133,14 @@ Cause commune : les vues construisent du HTML par concaténation, et `htmlspecia
 - **Fichiers** : `cont_admin.php:91-109`, `modele_admin.php:62-70`
 - **Extrait** : `UPDATE role SET role = "Client" WHERE idUtilisateur = ? AND idAssociation = ?`
 - **Scénario** : `accepterDemande&id=<un gestionnaire>` transforme son rôle en Client. `refuserDemande` supprime tous ses rôles. Il manque `AND role='enCours'`.
+
+### CA-6 — Un gestionnaire peut supprimer le rôle Admin — **Haute** — Confirmée
+- **Fichiers** : `cont_admin.php:66-76` et `modele_admin.php:114-117`
+- **Extrait** : `DELETE FROM role WHERE idUtilisateur = ? AND idAssociation = ?`, sans vérifier le rôle de la cible.
+- **Donnée réelle** : dans le dump, le seul Admin (utilisateur 1) est une ligne `role` rattachée à l'association 1 (SCH-8).
+- **Scénario** : un gestionnaire de l'association 1 appelle `bannirUtilisateur&id=1`. Plus aucun compte n'est administrateur, et la validation des demandes de création d'association devient impossible. Comme c'est un GET sans jeton, un lien piégé suffit (CSRF-1).
+- **Test** : `deleteUtilisateur(1, 1)`, appel exact du contrôleur.
+- **Correctif** : refuser l'action si la cible a un rôle Admin ou Gestionnaire, et stocker le rôle Admin hors de la table des rôles d'association.
 
 ### Autres points (Haute, lecture de code)
 - `cont_commande.php:147-153` et `modele_commande.php:127-131` : un barman lit login, email et solde du client de toute commande `(id, date)`, même d'une autre association.
@@ -196,12 +205,12 @@ Cause commune : les vues construisent du HTML par concaténation, et `htmlspecia
 ### UP-3 — Retour de `move_uploaded_file` ignoré — **Faible** — Confirmée
 - `cont_asso.php:182,188-190` et `cont_produit.php:64,109` annoncent un succès même si l'écriture échoue.
 
-### UP-4 — Association retrouvée par nom : écrasement et suppression — **Haute** — Confirmée (logique), **Moyenne** (effet en base)
+### UP-4 — Association retrouvée par nom : écrasement et suppression — **Haute** — Confirmée (le dump confirme que `nom` n'est pas unique et qu'il n'y a aucune clé étrangère)
 - **Fichier** : `modules/mod_asso/cont_asso.php:167-168,184-190,196`
 - **Extrait** : `insertAssociation($nom); $nomFichier = $this->modele->idAsso($nomAssociation);`. La recherche par nom renvoie la **première** association homonyme.
 - **Scénario** : un utilisateur crée une « nouvelle » association du même nom qu'une association valide (id 39). Les PDF de la nouvelle demande sont écrits dans `documentsLegaux/*_39.pdf`, écrasant les vrais documents. Si la validation échoue, `deleteAsso(39)` supprime l'association existante.
 - **Test** : `idAsso('Buvette')` renvoie l'id existant (39), puis `deleteAsso` le supprime.
-- **À vérifier** : si `association.nom` a une contrainte `UNIQUE`, l'`INSERT` échoue avant (erreur fatale, pas d'écrasement). Le schéma n'est pas versionné.
+- **Schéma réel** : `association.nom` n'a pas de contrainte `UNIQUE` (seul `id` en a une) et la base n'a aucune clé étrangère. L'`INSERT` homonyme réussit donc, et `deleteAsso` supprime l'association existante sans être bloqué (SCH-1, SCH-3).
 - **Correctif** : utiliser `lastInsertId()`.
 
 ### UP-5 — Pièces légales servies sans authentification — **Critique** — Confirmée
@@ -220,9 +229,28 @@ Cause commune : les vues construisent du HTML par concaténation, et `htmlspecia
 | LM-2 | Le client se crédite lui-même, sans preuve de paiement | `cont_compte.php:32-50` | Haute si non voulu | Confirmée (**à confirmer avec l'équipe** : est-ce le comportement voulu ?) |
 | LM-3 | Prix, quantité et perte sans validation | `cont_produit.php:52,95,147`, `cont_stock.php:58,170` | Moyenne | Confirmée |
 | LM-4 | Perte négative : `ajouterPertes(-100)` fait passer le stock de 5 à 105 | `cont_stock.php:170-175` | Moyenne | Confirmée |
-| LM-5 | Code de retrait NULL + code vide accepté (`==`) | `modele_commande.php:141` | Faible | Confirmée ; ne concerne que des commandes dont le code est NULL |
+| LM-5 | Code de retrait NULL + code vide accepté (`==`) | `modele_commande.php:141` | Moyenne | Confirmée. Dans le dump, 56 commandes sur 73 n'ont pas de code, dont 14 encore « Encours » (SCH-5, SCH-6) |
 | LM-6 | Aucune transaction : course sur solde et stock à la validation du panier | `cont_panier.php:79-135` | Moyenne | Confirmée (absence) ; course elle-même non exécutée |
 | LM-7 | `getCode()` tire un code, l'affiche, puis en retourne un autre | `modele_panier.php:112-116` | Faible | Confirmée |
+
+---
+
+## 9. Schéma de base de données (dump fourni) — test : `test_schema_bdd.php`
+
+| ID | Constat | Gravité | Certitude |
+|---|---|---|---|
+| SCH-1 | Aucune clé étrangère : pas de cascade, lignes orphelines après `deleteAsso` ou suppression de compte | Moyenne | Confirmée |
+| SCH-2 | `utilisateurs.login` non unique (AUTH-9) | Moyenne | Confirmée |
+| SCH-3 | `association.nom` non unique (UP-4) | Haute | Confirmée |
+| SCH-4 | Table `role` sans clé primaire ni unicité : doublons de rôles et de demandes | Faible | Confirmée |
+| SCH-5 | `commande.code` nullable (LM-5) | Moyenne | Confirmée |
+| SCH-6 | 56 commandes sur 73 sans code, dont 14 « Encours » validables sans code | Moyenne | Confirmée |
+| SCH-7 | Tables en `latin1` et connexion PDO sans `charset` : caractères hors latin1 mal gérés (durcissement) | Faible | Confirmée |
+| SCH-8 | Le seul rôle Admin est rattaché à l'association 1 (CA-6) | Haute | Confirmée |
+| SCH-9 | `prix` et `solde` en `decimal(10,0)` : aucune décimale, les prix à centimes sont arrondis | Faible (fonctionnel) | Confirmée |
+
+- Le dump est daté du 30/09/2026, serveur MySQL 8.0 (mode strict par défaut non confirmé par le dump). En mode strict, un montant non numérique (LM-1) provoque une exception PDO non interceptée plutôt qu'un enregistrement silencieux.
+- Les **hachages** sont bien des `bcrypt` (`$2y$10$…`) : point positif. Plusieurs comptes ont des e-mails et téléphones réels dans ce fichier : à traiter comme des données personnelles.
 
 ---
 
@@ -230,8 +258,8 @@ Cause commune : les vues construisent du HTML par concaténation, et `htmlspecia
 
 1. **SEC-1** : changer le mot de passe BDD côté serveur, puis externaliser la configuration.
 2. **SEC-2, SEC-3, UP-5** : retirer les PDF du dépôt, les stocker hors racine web et contrôler l'accès.
-3. **CA-1** : valider association et rôle avant de les écrire en session. Cela neutralise en partie CA-2 et CA-3 pour les utilisateurs légitimes.
-4. **CA-2, CA-3, CA-4, CA-5** : borner chaque requête par `idAssociation` et vérifier le statut.
+3. **CA-1** : valider association et rôle avant de les écrire en session. Cela neutralise en partie CA-2 et CA-3 pour les utilisateurs légitimes. **CA-6** : protéger le compte Admin.
+4. **CA-2, CA-3, CA-4, CA-5** : borner chaque requête par `idAssociation` et vérifier le statut. **SCH-1 à SCH-3** : ajouter clés étrangères et contraintes `UNIQUE` (`login`, `nom`).
 5. **CSRF-1** : POST et jeton pour les actions d'état, `SameSite` sur le cookie.
 6. **XSS-1 à XSS-6** : échapper toutes les sorties et ajouter une CSP.
 7. **UP-1 et UP-4** : entier forcé pour `id`, `lastInsertId()`, noms de fichiers générés.
@@ -239,7 +267,7 @@ Cause commune : les vues construisent du HTML par concaténation, et `htmlspecia
 
 ## Limites de cet audit
 
-- Application non exécutée avec MySQL. Les tests reproduisent les contrôleurs sur SQLite, avec un schéma déduit.
+- Application non exécutée avec MySQL. Les tests reproduisent les contrôleurs sur SQLite, avec un schéma déduit des requêtes et recoupé avec le dump.
 - Les PDF, images et le PDF du rapport n'ont pas été lus (règle du `CLAUDE.md`).
 - Pas de consultation de bases d'avis de sécurité (pas de réseau) : le point dépendances est limité.
 - La concurrence (LM-6) n'est pas exécutée.
