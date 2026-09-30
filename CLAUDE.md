@@ -6,10 +6,11 @@ SAE 3.02 de l'IUT de Montreuil. Clients, barmans, gestionnaires et administrateu
 produits, stocks, fournisseurs, commandes, paniers et soldes, pour une ou plusieurs associations.
 
 ## Stack
-- PHP (aucune version déclarée ; testé avec PHP 8.4 en local), sessions PHP, rendu HTML côté serveur.
-- MySQL via PDO (aucune version déclarée, pas de schéma `.sql` versionné ; voir `documentsArendre/mld.png`).
-- Front : Bootstrap 5.3.8 et Bootstrap Icons 1.11.3 (CDN dans `template.php`), `style.css`.
-- Aucun framework, ni Composer, ni npm.
+- **Langages** : PHP (HTML généré côté serveur), CSS, un peu de JavaScript pour les modales.
+- **Framework** : aucun côté serveur (MVC maison). Front : Bootstrap 5.3.8 et Bootstrap Icons 1.11.3 (CDN).
+- **Base de données** : MySQL via PDO, sans schéma `.sql` versionné (voir `documentsArendre/mld.png`).
+- **Versions** : Bootstrap et Bootstrap Icons sont épinglés dans `template.php`. Les versions de PHP
+  et de MySQL ne sont déclarées nulle part (ni Composer) ; le code a été vérifié avec PHP 8.4.
 
 ## Commandes
 ### Installation
@@ -53,3 +54,12 @@ voulu et injecte son rendu dans `template.php`.
 - Formulaires POST : refusés si `Token::verifierToken($_POST['tokenCSRF'])` échoue.
 - Redirection avec `header('Location: ...'); exit();`.
 - Attention : `Connexion.php` contient des identifiants BDD en clair, à ne pas propager.
+
+## Règles de travail
+- Ne jamais committer de secret (mot de passe, identifiant BDD, clé) ; ne pas en ajouter dans le code ni dans `CLAUDE.md`.
+- Créer une branche et une PR par modification, jamais de push direct sur la branche principale.
+- Accompagner tout correctif de sécurité d'un test qui reproduit la faille.
+- Lancer les tests (et le contrôle de syntaxe `php -l`) avant d'ouvrir une PR.
+- Expliquer tout changement de dépendance (ajout, mise à jour, suppression, version CDN) dans la PR.
+- Ne pas modifier `documentsArendre/` ni `documentsLegaux/` sans demande explicite.
+- Répondre en français.
