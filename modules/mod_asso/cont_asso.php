@@ -73,12 +73,13 @@ class ContAsso {
     /**
      * permet d'attribuer un role à un utilisateur dans une association : Gestionnaire, Barman ou client
      * si l'utilisateur n'est jamais aller une association il aura le role Client
+     * l'association et le rôle en session ne sont écrits qu'une fois le rôle validé pour cette association
     */
     public function aAppuyeAsso() {
         if(isset($_GET['id']) && isset($_SESSION['login'])) {
-            $idAsso = $_GET['id'];
-            $_SESSION['asso'] = $idAsso;
-            $_SESSION['nomAsso'] = $this->modele->getNomAssociation($_SESSION['asso']);
+            // on ne garde jamais le rôle ni l'association de l'association précédente
+            $this->quitterAssoc();
+            $idAsso = (int) $_GET['id'];
 
             $idUtilisateur = $_SESSION['id'];
 
@@ -102,6 +103,8 @@ class ContAsso {
                     }
 
                     if($trouve){
+                        $_SESSION['asso'] = $idAsso;
+                        $_SESSION['nomAsso'] = $this->modele->getNomAssociation($idAsso);
                         $_SESSION['role'] = $roleChoisi;
 
                         if($roleChoisi == 'Barman'){
@@ -126,6 +129,8 @@ class ContAsso {
                 }
                 else {
                     $roleChoisi = $listeRoles[0]['role'];
+                    $_SESSION['asso'] = $idAsso;
+                    $_SESSION['nomAsso'] = $this->modele->getNomAssociation($idAsso);
                     $_SESSION['role'] = $roleChoisi;
                     if($roleChoisi == 'Barman'){
                         header('Location: index.php?module=commande');
