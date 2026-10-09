@@ -17,6 +17,7 @@ class ContAsso {
     private function quitterAssoc(){
         unset($_SESSION['role']);
         unset($_SESSION['asso']);
+        unset($_SESSION['nomAsso']);
     }
 
     /**

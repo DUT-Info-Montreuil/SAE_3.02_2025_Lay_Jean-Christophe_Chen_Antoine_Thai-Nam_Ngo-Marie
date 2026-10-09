@@ -6,16 +6,16 @@ require __DIR__ . '/lib.php';
 
 /** Scénarios : [titre, session de départ, $_GET, vrai si la faille est présente d'après la session finale]. */
 function scenarios(): array {
-    $gestA = ['role' => 'Gestionnaire', 'asso' => 1];
+    $gestA = ['role' => 'Gestionnaire', 'asso' => 1, 'nomAsso' => 'A'];
     return [
         1 => ["gestionnaire de A sans rôle dans B (asso 2)", ['id' => 10] + $gestA, ['id' => '2'],
-              fn($s) => isset($s['role']) || isset($s['asso'])],
+              fn($s) => isset($s['role']) || isset($s['asso']) || isset($s['nomAsso'])],
         2 => ["gestionnaire de A vers une association inexistante (asso 999)", ['id' => 10] + $gestA, ['id' => '999'],
-              fn($s) => isset($s['role']) || isset($s['asso'])],
+              fn($s) => isset($s['role']) || isset($s['asso']) || isset($s['nomAsso'])],
         3 => ["gestionnaire de A, 2 rôles dans B, choix de rôle pas encore fait", ['id' => 30] + $gestA, ['id' => '2'],
-              fn($s) => isset($s['role']) || isset($s['asso'])],
+              fn($s) => isset($s['role']) || isset($s['asso']) || isset($s['nomAsso'])],
         4 => ["gestionnaire de A, Client dans B, force &role=Gestionnaire", ['id' => 50] + $gestA, ['id' => '2', 'role' => 'Gestionnaire'],
-              fn($s) => isset($s['role']) || isset($s['asso'])],
+              fn($s) => isset($s['role']) || isset($s['asso']) || isset($s['nomAsso'])],
         7 => ["régression : Client de B change d'asso, doit obtenir Client", ['id' => 20] + $gestA, ['id' => '2'],
               fn($s) => ($s['role'] ?? null) !== 'Client' || ($s['asso'] ?? null) != 2],
         8 => ["régression : 2 rôles dans B, choix explicite Barman", ['id' => 30] + $gestA, ['id' => '2', 'role' => 'Barman'],
@@ -48,7 +48,8 @@ foreach (scenarios() as $n => $sc) {
     preg_match('/SESSION=(.*)/', (string)$sortie, $m);
     $session = isset($m[1]) ? json_decode($m[1], true) : null;
     if (!is_array($session)) { verdict("CA-1/$n", $sc[0], true, "sortie inexploitable : " . trim((string)$sortie)); continue; }
-    $titre = $sc[0] . ' -> role=' . ($session['role'] ?? '(absent)') . ', asso=' . ($session['asso'] ?? '(absent)');
+    $titre = $sc[0] . ' -> role=' . ($session['role'] ?? '(absent)') . ', asso=' . ($session['asso'] ?? '(absent)')
+              . ', nomAsso=' . ($session['nomAsso'] ?? '(absent)');
     verdict("CA-1/$n", $titre, ($sc[3])($session));
 }
 fin();
