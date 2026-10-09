@@ -58,7 +58,9 @@ class ModeleCommande extends Modele {
     }
 
     /**
-     * Refuse une commande : changement de statut, remboursement du client et restock dans une seule transaction.
+     * Refuse une commande : changement de statut, remboursement du client et tentative de restock dans une seule transaction.
+     * Attention : le restock est appelé mais n'a pas d'effet tant que derouleCommande() ne renvoie pas idProduit
+     * (la requête ne sélectionne que nom, quantite et prix).
      * Le changement de statut est fait en premier : il verrouille la ligne et n'aboutit que pour une commande
      * « Encours », donc le crédit ne peut avoir lieu qu'une fois.
      * @return bool false (rien n'est modifié) si la commande n'est pas « Encours », n'est pas de l'association
