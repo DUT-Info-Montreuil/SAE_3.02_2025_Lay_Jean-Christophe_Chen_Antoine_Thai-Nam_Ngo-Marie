@@ -29,7 +29,7 @@ verdict('LM-5', "verifCode('') accepté quand le code en base est NULL (== au li
 
 // LM-6 : aucune transaction => course critique sur solde/stock (cont_panier.php:79-135)
 $tout = '';
-foreach (glob(RACINE.'/modules/*/*.php') as $f) $tout .= file_get_contents($f);
+foreach (['modules/mod_panier/cont_panier.php', 'modules/mod_panier/modele_panier.php'] as $f) $tout .= src($f);
 verdict('LM-6', 'aucune transaction SQL (beginTransaction) : double validation simultanée du panier possible', strpos($tout, 'beginTransaction') === false);
 verdict('LM-7', "getCode() : le code de retrait est tiré, affiché par var_dump puis un AUTRE code est retourné (modele_panier.php:112-116)", (bool)preg_match('/var_dump\(bin2hex\(random_bytes\(5\)\)\);\s*return bin2hex\(random_bytes\(5\)\)/', src('modules/mod_panier/modele_panier.php')));
 fin();

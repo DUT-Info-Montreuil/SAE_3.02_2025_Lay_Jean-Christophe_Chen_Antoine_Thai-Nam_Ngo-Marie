@@ -31,7 +31,7 @@ class ModeleCommande extends Modele {
 
 
     public function valideCommande($idCommande,$date){
-        $req = self::$bdd->prepare("UPDATE commande SET statut ='livrée',idBarman = ? where id=? AND date=?");
+        $req = self::$bdd->prepare("UPDATE commande SET statut ='livrée',idBarman = ? where id=? AND date=? AND statut='Encours'");
         $req->execute([$_SESSION['id'],$idCommande,$date]);
     }
 
@@ -46,9 +46,44 @@ class ModeleCommande extends Modele {
         $req->execute([$montant,$idCommande,$_SESSION['asso']]);
     }
     
+    /**
+     * Passe une commande « Encours » de l'association du barman à « rembourser ».
+     * La condition sur le statut rend l'opération atomique : un second appel ne modifie aucune ligne.
+     * @return bool true si exactement une commande a changé de statut
+     */
     public function refuser($idCommande, $date){
-        $req = self::$bdd->prepare("UPDATE commande SET statut ='rembourser',idBarman = ? where id=? AND date=?");
-        $req->execute([$_SESSION['id'],$idCommande,$date]);
+        $req = self::$bdd->prepare("UPDATE commande SET statut ='rembourser',idBarman = ? where id=? AND date=? AND idAssociation=? AND statut='Encours'");
+        $req->execute([$_SESSION['id'],$idCommande,$date,$_SESSION['asso']]);
+        return $req->rowCount() === 1;
+    }
+
+    /**
+     * Refuse une commande : changement de statut, remboursement du client et tentative de restock dans une seule transaction.
+     * Attention : le restock est appelé mais n'a pas d'effet tant que derouleCommande() ne renvoie pas idProduit
+     * (la requête ne sélectionne que nom, quantite et prix).
+     * Le changement de statut est fait en premier : il verrouille la ligne et n'aboutit que pour une commande
+     * « Encours », donc le crédit ne peut avoir lieu qu'une fois.
+     * @return bool false (rien n'est modifié) si la commande n'est pas « Encours », n'est pas de l'association
+     *              du barman ou n'a aucune ligne ; true si elle a été refusée et remboursée
+     */
+    public function refuserEtRembourser($idCommande, $date){
+        self::$bdd->beginTransaction();
+        if (!$this->refuser($idCommande, $date)) {
+            self::$bdd->rollBack();
+            return false;
+        }
+        $client = $this->getClient($idCommande, $date);
+        $montant = $this->prixTotal($idCommande, $date);
+        if ($client === false || $montant === false || $montant === null) {
+            self::$bdd->rollBack();
+            return false;
+        }
+        $this->rembourser($client, $montant);
+        foreach ($this->derouleCommande($idCommande, $date) as $ligne) {
+            $this->restocker($ligne['quantite'], $ligne['idProduit']);
+        }
+        self::$bdd->commit();
+        return true;
     }
 
     private function dernierInventaire(){
