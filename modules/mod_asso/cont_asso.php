@@ -182,12 +182,7 @@ class ContAsso {
                     move_uploaded_file($_FILES['imageAso']['tmp_name'], $cheminImage);
                     $this->modele->ajoutImage($nomFichier, $cheminImage);
                     // pièces légales : dossier privé hors racine web ; en base, seul le nom du fichier est stocké
-                    if (!is_dir(DOCUMENTS_LEGAUX_DIR) && !mkdir(DOCUMENTS_LEGAUX_DIR, 0750, true) && !is_dir(DOCUMENTS_LEGAUX_DIR)) {
-                        $_SESSION['messagePasOk'] = 'Envoie demande fail';
-                        $this->modele->deleteAsso($nomFichier);
-                        $this->formAssociation();
-                        return;
-                    }
+                    is_dir(DOCUMENTS_LEGAUX_DIR) || mkdir(DOCUMENTS_LEGAUX_DIR, 0750, true);
                     $nomCarte = 'carteIdentite_' . $nomFichier . '.pdf';
                     $nomStatut = 'statutAsso_' . $nomFichier . '.pdf';
                     $nomProces = 'procesVerbal_' . $nomFichier . '.pdf';
