@@ -96,15 +96,9 @@ class ContCommande {
             $idCommande = $_GET['id'];
             $date = $_GET['date'];
 
-            $this->modele->rembourser(
-                $this->modele->getClient($_GET['id'], $_GET['date']),
-                $this->modele->prixTotal($idCommande, $date)
-            );
-            $this->modele->refuser($idCommande, $date);
-            foreach ($this->modele->derouleCommande($idCommande, $date) as $l1) {
-                $this->modele->restocker($l1['quantite'], $l1['idProduit']);
+            if (!$this->modele->refuserEtRembourser($idCommande, $date)) {
+                $_SESSION['messagePasOk'] = "Cette commande ne peut pas être refusée (déjà traitée, introuvable ou sans article).";
             }
-
         }
         header("Location: index.php?module=commande&action=commandeAvancee", true, 303);
         exit();
