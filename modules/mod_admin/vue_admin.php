@@ -204,13 +204,13 @@ class VueAdmin extends VueGenerique{
                                         <img src="' . htmlspecialchars($element['image']) . '" class="img-fluid rounded" style="height:100px; object-fit:cover;" alt="image-Asso">
                                     </td>
                                     <td>
-                                        <a href="' . htmlspecialchars($element['carteIdentitePDF']) . '" target="_blank" class="btn btn-sm btn-outline-primary">Voir PDF</a>
+                                        <a href="index.php?module=admin&action=voirPieceLegale&asso=' . (int) $element['assoId'] . '&type=carteIdentite" target="_blank" class="btn btn-sm btn-outline-primary">Voir PDF</a>
                                     </td>
                                     <td>
-                                        <a href="' . htmlspecialchars($element['statutAssoPDF']) . '" target="_blank" class="btn btn-sm btn-outline-primary">Voir PDF</a>
+                                        <a href="index.php?module=admin&action=voirPieceLegale&asso=' . (int) $element['assoId'] . '&type=statutAsso" target="_blank" class="btn btn-sm btn-outline-primary">Voir PDF</a>
                                     </td>
                                     <td>
-                                        <a href="' . htmlspecialchars($element['procesVerbalPDF']) . '" target="_blank" class="btn btn-sm btn-outline-primary">Voir PDF</a>
+                                        <a href="index.php?module=admin&action=voirPieceLegale&asso=' . (int) $element['assoId'] . '&type=procesVerbal" target="_blank" class="btn btn-sm btn-outline-primary">Voir PDF</a>
                                     </td>
                                 </tr>
                             </tbody>

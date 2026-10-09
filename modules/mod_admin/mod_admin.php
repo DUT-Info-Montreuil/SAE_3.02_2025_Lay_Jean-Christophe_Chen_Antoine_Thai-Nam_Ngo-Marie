@@ -59,6 +59,9 @@ class ModAdmin{
             case 'refuserDemande':
                 $this->controleur->refuserDemande();
                 break;
+            case 'voirPieceLegale':
+                $this->controleur->voirPieceLegale();
+                break;
             default:
                 $this->controleur->unrecognizedAction();
                 break;

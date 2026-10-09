@@ -1,4 +1,5 @@
 <?php
+define('DOCUMENTS_LEGAUX_DIR', rtrim(getenv('ICONNECT_DOCS_LEGAUX') ?: dirname(__DIR__) . '/documentsLegaux_prive', '/')); // dossier privé des pièces légales, hors racine web
 class Modele extends Connexion{
 
     public function idInventaire($idAsso){

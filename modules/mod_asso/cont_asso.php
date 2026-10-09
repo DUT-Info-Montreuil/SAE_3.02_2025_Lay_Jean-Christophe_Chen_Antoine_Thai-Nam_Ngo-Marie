@@ -181,15 +181,25 @@ class ContAsso {
                     $cheminImage = 'modules/mod_asso/logos/' . $nomFichier . '.' . $extension;
                     move_uploaded_file($_FILES['imageAso']['tmp_name'], $cheminImage);
                     $this->modele->ajoutImage($nomFichier, $cheminImage);
-                    $cheminCarte = 'documentsLegaux/carteIdentite_' . $nomFichier . '.pdf';
-                    $cheminStatut = 'documentsLegaux/statutAsso_' . $nomFichier . '.pdf';
-                    $cheminProces = 'documentsLegaux/procesVerbal_' . $nomFichier . '.pdf';
+                    // pièces légales : dossier privé hors racine web ; en base, seul le nom du fichier est stocké
+                    if (!is_dir(DOCUMENTS_LEGAUX_DIR) && !mkdir(DOCUMENTS_LEGAUX_DIR, 0750, true) && !is_dir(DOCUMENTS_LEGAUX_DIR)) {
+                        $_SESSION['messagePasOk'] = 'Envoie demande fail';
+                        $this->modele->deleteAsso($nomFichier);
+                        $this->formAssociation();
+                        return;
+                    }
+                    $nomCarte = 'carteIdentite_' . $nomFichier . '.pdf';
+                    $nomStatut = 'statutAsso_' . $nomFichier . '.pdf';
+                    $nomProces = 'procesVerbal_' . $nomFichier . '.pdf';
+                    $cheminCarte = DOCUMENTS_LEGAUX_DIR . '/' . $nomCarte;
+                    $cheminStatut = DOCUMENTS_LEGAUX_DIR . '/' . $nomStatut;
+                    $cheminProces = DOCUMENTS_LEGAUX_DIR . '/' . $nomProces;
 
                     move_uploaded_file($_FILES['carteIdentite']['tmp_name'], $cheminCarte);
                     move_uploaded_file($_FILES['statutAsso']['tmp_name'], $cheminStatut);
                     move_uploaded_file($_FILES['procesVerbal']['tmp_name'], $cheminProces);
 
-                    $this->modele->enregistrerDemande($idUtilisateur, $nomFichier, $cheminCarte, $cheminStatut, $cheminProces);
+                    $this->modele->enregistrerDemande($idUtilisateur, $nomFichier, $nomCarte, $nomStatut, $nomProces);
                     $_SESSION['messageOk'] = 'Envoie demande success';
                 } else {
                     $_SESSION['messagePasOk'] = 'Envoie demande fail';
