@@ -123,6 +123,13 @@ $cmd = [PHP_BINARY, '-r', 'require "Connexion.php"; require "modele.php"; echo d
 $p = proc_open($cmd, [1 => ['pipe', 'w'], 2 => ['file', '/dev/null', 'w']], $pipes, RACINE, $env);
 $dir = trim((string)stream_get_contents($pipes[1])); fclose($pipes[1]); proc_close($p);
 verdict('UP-5f', 'DOCUMENTS_LEGAUX_DIR défini par défaut hors de la racine web', $dir === '' || strpos($dir . '/', RACINE . '/') === 0, "valeur=" . ($dir === '' ? '(non définie)' : $dir));
+// valeur vide ou relative : ICONNECT_DOCS_LEGAUX doit être ignorée, le dossier par défaut s'applique
+foreach (['' => 'vide', 'dossier/relatif' => 'relative'] as $valeur => $nom) {
+    $env2 = ['ICONNECT_DOCS_LEGAUX' => (string)$valeur] + getenv();
+    $p = proc_open($cmd, [1 => ['pipe', 'w'], 2 => ['file', '/dev/null', 'w']], $pipes, RACINE, $env2);
+    $dir2 = trim((string)stream_get_contents($pipes[1])); fclose($pipes[1]); proc_close($p);
+    verdict('UP-5f2', "ICONNECT_DOCS_LEGAUX $nom : ignorée, dossier par défaut utilisé", $dir2 !== $dir, "valeur=$dir2");
+}
 verdict('UP-5g', "cont_asso.php écrit via DOCUMENTS_LEGAUX_DIR, plus dans 'documentsLegaux/' (analyse statique)",
         strpos(src('modules/mod_asso/cont_asso.php'), 'DOCUMENTS_LEGAUX_DIR') === false || strpos(src('modules/mod_asso/cont_asso.php'), "'documentsLegaux/") !== false);
 verdict('UP-5h', "vue_admin.php ne lie plus les chemins bruts de la base (analyse statique)",
