@@ -1,6 +1,6 @@
 # Rapport d'audit de sécurité — I-CONNECT
 
-Périmètre : audit de sécurité de l'application PHP I-CONNECT (code et schéma de base issu d'un dump fourni). Chaque constat est vérifié en exécutant les scripts de `tests/securite/` sous PHP 8.3.6 : les contrôleurs tournent sur SQLite (pas de MySQL) et la sortie brute est conservée dans `docs/preuves_audit.txt` (exécution du 2026-10-09, `sh tests/securite/run_all.sh`, scripts du dépôt tels quels). « Type de preuve » : *exécuté* = le code de l'application tourne et son effet est observé ; *statique* = le test lit le code ou le schéma par motif, sans l'exécuter.
+Périmètre : audit de sécurité de l'application PHP I-CONNECT (code et schéma de base issu d'un dump fourni). Chaque constat est vérifié en exécutant les scripts de `tests/securite/` sous PHP 8.3.6 : les contrôleurs tournent sur SQLite (pas de MySQL) et la sortie brute est conservée dans `docs/preuves_audit.txt`. « Type de preuve » : *exécuté* = le code de l'application tourne et son effet est observé ; *statique* = le test lit le code ou le schéma par motif, sans l'exécuter.
 
 Statuts utilisés : **confirmée** (une ligne de sortie le montre), **non confirmée** (preuve insuffisante ou non tranchée), **faux positif** (le constat de l'IA est infirmé).
 
