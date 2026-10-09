@@ -1,0 +1,96 @@
+=================== tests/securite/test_auth_sessions.php
+[VULNÉRABLE] AUTH-1 : pas de session_regenerate_id après connexion (fixation de session, cont_connexion.php:78-80)
+[VULNÉRABLE] AUTH-2 : déconnexion sans suppression du cookie de session (cont_connexion.php:92-98)
+[VULNÉRABLE] AUTH-3 : aucune limitation de tentatives de connexion
+[VULNÉRABLE] AUTH-4 : aucune règle de robustesse du mot de passe côté serveur (seul minlength HTML)
+[VULNÉRABLE] AUTH-5 : champ mot de passe en type="text" (vue_connexion.php:23,63)
+[VULNÉRABLE] AUTH-6 : énumération de logins à l'inscription (cont_connexion.php:50)
+[VULNÉRABLE] AUTH-7 : déconnexion déclenchée par GET sans jeton (déni de service par lien / <img>)
+[VULNÉRABLE] AUTH-8 : Token::verifierToken('0') accepté pour un jeton de la forme 0e<chiffres> (opérateur != au lieu de hash_equals)
+[VULNÉRABLE] CSRF-1 : bannirUtilisateur exécuté via GET sans jeton (un lien piégé suffit si la victime est gestionnaire)
+            preuve : rôles restants de la victime : 0
+
+9 faille(s) détectée(s)
+=================== tests/securite/test_config_secrets.php
+[VULNÉRABLE] SEC-1 : Connexion.php:10 mot de passe BDD en clair dans un fichier suivi par git
+            preuve : (valeur masquée volontairement)
+[VULNÉRABLE] SEC-2 : documentsLegaux/ : fichiers versionnés dans git
+            preuve : 15 fichier(s)
+[VULNÉRABLE] SEC-3 : pas de .htaccess / règle d'accès sur documentsLegaux/
+[VULNÉRABLE] SEC-4 : var_dump() actifs
+            preuve : modules/mod_panier/modele_panier.php:113, modules/mod_panier/modele_panier.php:114, modules/mod_admin/cont_admin.php:176
+[OK        ] SEC-5 : PDOException non interceptée : le mot de passe apparaît dans la trace (PHP < 8.2 seulement ; masqué par #[SensitiveParameter] depuis 8.2)
+            preuve : (connexion dirigée vers 127.0.0.1:1 ; PHP 8.3.6 ; le nom d'hôte et l'utilisateur restent visibles dans les messages d'erreur)
+[VULNÉRABLE] SEC-6a : aucun en-tête de sécurité (CSP, X-Frame-Options, nosniff, HSTS)
+[VULNÉRABLE] SEC-6b : session_start() sans httponly/secure/samesite (index.php:5)
+[VULNÉRABLE] SEC-6c : Bootstrap Icons chargé depuis un CDN sans attribut integrity (template.php:8)
+
+7 faille(s) détectée(s)
+=================== tests/securite/test_controle_acces.php
+PHP Warning:  Undefined array key "nomAsso" in /home/user/SAE_3.02_2025_Lay_Jean-Christophe_Chen_Antoine_Thai-Nam_Ngo-Marie/modules/mod_fournisseur/vue_fournisseur.php on line 54
+[VULNÉRABLE] CA-1 : rôle Gestionnaire conservé après changement vers l'asso B (asso=2)
+[VULNÉRABLE] CA-2 : fournisseur de l'asso B supprimé par le gestionnaire de A
+[VULNÉRABLE] CA-3 : updateProduit() sans filtre d'association (le contrôleur ne vérifie pas l'appartenance)
+            preuve : cont_produit.php:93,97 : $idProduit vient de $_GET[id], aucune jointure boutique/association
+[VULNÉRABLE] CA-4 : commande déjà « livrée » remboursée 3 fois : solde = 45 € pour 15 € d'achat
+            preuve : cont_commande.php:92-111 ne teste jamais le statut ; séquence rejouée via le modèle
+[VULNÉRABLE] CA-5 : accepterDemande sur un Gestionnaire : son rôle devient « Client » (aucun filtre role='enCours')
+[VULNÉRABLE] CA-6 : bannirUtilisateur sur l'Admin : son rôle est supprimé (cont_admin.php:66-76 ne teste pas le rôle de la cible)
+
+6 faille(s) détectée(s)
+=================== tests/securite/test_dependances.php
+[VULNÉRABLE] DEP-1 : aucun composer.json / lockfile : impossible d'auditer ou d'épingler les dépendances PHP
+[VULNÉRABLE] DEP-2 : aucune version de PHP/MySQL déclarée (ni composer, ni .php-version, ni Dockerfile)
+[VULNÉRABLE] DEP-3 : ressources CDN sans SRI
+            preuve : https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css
+            info   : Bootstrap 5.3.8 (à comparer avec les avis de sécurité officiels ; aucun accès réseau ici)
+            info   : PHP d'exécution 8.3.6
+
+3 faille(s) détectée(s)
+=================== tests/securite/test_injections.php
+[OK        ] INJ-CMD : exécution de commandes système
+[OK        ] INJ-EVAL : eval / unserialize / assert
+[OK        ] INJ-SQL : SQL construit par concaténation / interpolation avec une variable
+[OK        ] INJ-LFI : include/require piloté par une entrée utilisateur
+[OK        ] INJ-SSTI : moteur de templates (injection de template)
+[OK        ] INJ-SSRF : lecture de fichier / URL pilotée par l'utilisateur
+[OK        ] INJ-REDIR : redirection ouverte (Location construit avec une variable)
+[OK        ] INJ-SQL-CFG : PDO sans charset ni ATTR_EMULATE_PREPARES=false (durcissement absent, non exploitable en l'état)
+
+0 faille(s) détectée(s)
+=================== tests/securite/test_logique_metier.php
+[VULNÉRABLE] LM-1 : recharger : "abc" > 0 est vrai en PHP 8, aucune validation numérique ni plafond
+[VULNÉRABLE] LM-2 : recharger : le client se crédite lui-même sans aucun justificatif de paiement (conception à confirmer avec l'équipe)
+[VULNÉRABLE] LM-3 : prix / quantité / perte sans validation (cont_produit.php:52,95,147 ; cont_stock.php:58,170)
+PHP Warning:  Undefined array key "nomAsso" in /home/user/SAE_3.02_2025_Lay_Jean-Christophe_Chen_Antoine_Thai-Nam_Ngo-Marie/modules/mod_stock/vue_stock.php on line 15
+[VULNÉRABLE] LM-4 : ajouterPertes(-100) : stock passé de 5 à 105
+[VULNÉRABLE] LM-5 : verifCode('') accepté quand le code en base est NULL (== au lieu de ===)
+[VULNÉRABLE] LM-6 : aucune transaction SQL (beginTransaction) : double validation simultanée du panier possible
+[VULNÉRABLE] LM-7 : getCode() : le code de retrait est tiré, affiché par var_dump puis un AUTRE code est retourné (modele_panier.php:112-116)
+
+7 faille(s) détectée(s)
+(ignoré : définir DUMP_SQL=dump.sql pour tests/securite/test_schema_bdd.php)
+=================== tests/securite/test_uploads_traversal.php
+[VULNÉRABLE] UP-1 : chemin d'écriture construit avec $_GET['id'] brut : le fichier peut atterrir hors de img_produits/
+            preuve : id=../../../tests/securite/_canari  =>  dossier cible résolu : <racine>/tests/securite
+[VULNÉRABLE] UP-2 : aucun contrôle MIME, taille, UPLOAD_ERR_OK ni is_uploaded_file (4 validations par pathinfo)
+[VULNÉRABLE] UP-3 : retour de move_uploaded_file() jamais vérifié (le succès est annoncé même si l'écriture échoue)
+[VULNÉRABLE] UP-4a : id du fichier obtenu par nom (idAsso($nom)) : écrase les pièces d'une asso homonyme (cont_asso.php:168,184-190)
+[VULNÉRABLE] UP-4b : idAsso('Buvette') renvoie l'id EXISTANT (39) et non celui de la nouvelle demande
+            preuve : dépend de l'absence de contrainte UNIQUE sur association.nom (schéma non versionné : à vérifier)
+[VULNÉRABLE] UP-4c : le nettoyage en cas d'échec (deleteAsso) supprime l'asso existante
+[VULNÉRABLE] UP-5 : documentsLegaux/procesVerbal_39.pdf servi sans authentification (serveur PHP intégré)
+            preuve : HTTP/1.1 200 OK
+
+7 faille(s) détectée(s)
+=================== tests/securite/test_xss.php
+[VULNÉRABLE] XSS-1 : vue_admin.php:156-159 (login/nom/prénom/tél non échappés)
+[VULNÉRABLE] XSS-2 : vue_commande.php:118-119 (login/email non échappés)
+[VULNÉRABLE] XSS-3 : vue_generique.php:57,68 (messageOk / messagePasOk non échappés)
+[VULNÉRABLE] XSS-4 : vue_admin.php:71 et ~12 autres vues ($_SESSION[nomAsso] non échappé)
+[VULNÉRABLE] XSS-5 : cont_admin.php:72 (login concaténé dans messageOk)
+[VULNÉRABLE] XSS-6 : vue_commande.php:398-399 : rupture d'attribut avec $_GET[id] / $_GET[date] (lien GET, sans jeton)
+
+6 faille(s) détectée(s)
+
+7 script(s) signalent des failles
