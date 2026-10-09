@@ -139,6 +139,47 @@ class ContAdmin{
         }
         $this->listeDemandeCreationAsso();
     }
+    /**
+     * Envoie une pièce légale (PDF) d'une demande de création d'association. Réservé au rôle Admin.
+     * 401 sans session, 403 si le rôle n'est pas Admin, 400 si type ou asso sont invalides,
+     * 404 si aucune demande ou aucun fichier. Le chemin est reconstruit ici (type de la liste blanche
+     * + identifiant entier) : aucune valeur venant de l'utilisateur ou de la base n'y entre.
+     */
+    public function voirPieceLegale(){
+        if (!isset($_SESSION['login']) || !isset($_SESSION['role'])){
+            $this->reponseSansPiece(401);
+        }
+        if ($_SESSION['role'] !== 'Admin'){
+            $this->reponseSansPiece(403);
+        }
+        $type = isset($_GET['type']) && is_string($_GET['type']) ? $_GET['type'] : '';
+        $asso = isset($_GET['asso']) && is_string($_GET['asso']) ? $_GET['asso'] : '';
+        if (!in_array($type, ['carteIdentite', 'statutAsso', 'procesVerbal'], true)
+            || !ctype_digit($asso) || strlen($asso) > 9){
+            $this->reponseSansPiece(400);
+        }
+        $idAsso = (int) $asso;
+        $nom = $type . '_' . $idAsso . '.pdf';
+        $chemin = DOCUMENTS_LEGAUX_DIR . '/' . $nom;
+        if (!$this->modele->demandeAssoExiste($idAsso) || !is_file($chemin)){
+            $this->reponseSansPiece(404);
+        }
+        header('Content-Type: application/pdf');
+        header('Content-Disposition: inline; filename="' . $nom . '"');
+        header('Content-Length: ' . filesize($chemin));
+        header('X-Content-Type-Options: nosniff');
+        header('Cache-Control: private, no-store');
+        readfile($chemin);
+        exit();
+    }
+
+    private function reponseSansPiece($code){
+        http_response_code($code);
+        header('Content-Type: text/plain; charset=utf-8');
+        echo 'Pièce légale non disponible';
+        exit();
+    }
+
     public function unrecognizedAction(){
         $this->vue->actionNonTrouver();
     }

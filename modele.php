@@ -1,4 +1,8 @@
 <?php
+// dossier privé des pièces légales, hors racine web ; ICONNECT_DOCS_LEGAUX est ignorée si elle est vide ou si ce n'est pas un chemin absolu
+$docsLegaux = getenv('ICONNECT_DOCS_LEGAUX');
+define('DOCUMENTS_LEGAUX_DIR', rtrim(is_string($docsLegaux) && preg_match('#^(/|[A-Za-z]:[\\\\/])#', $docsLegaux) ? $docsLegaux : dirname(__DIR__) . '/documentsLegaux_prive', '/'));
+unset($docsLegaux);
 class Modele extends Connexion{
 
     public function idInventaire($idAsso){

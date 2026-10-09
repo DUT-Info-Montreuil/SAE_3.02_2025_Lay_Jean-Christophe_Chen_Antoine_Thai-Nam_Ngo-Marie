@@ -80,6 +80,13 @@ class ModeleAdmin extends Modele {
         return $get->fetchAll();
     }
 
+    public function demandeAssoExiste($idAsso)
+    {
+        $get = self::$bdd->prepare('SELECT 1 FROM demandeCreationAsso WHERE idAsso = ?');
+        $get->execute([$idAsso]);
+        return (bool) $get->fetchColumn();
+    }
+
     public function refuserAsso($idAsso)
     {
         $update = self::$bdd->prepare('
