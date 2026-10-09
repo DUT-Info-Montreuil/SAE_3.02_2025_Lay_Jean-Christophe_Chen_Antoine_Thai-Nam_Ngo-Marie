@@ -20,6 +20,12 @@ function scenarios(): array {
               fn($s) => ($s['role'] ?? null) !== 'Client' || ($s['asso'] ?? null) != 2],
         8 => ["régression : 2 rôles dans B, choix explicite Barman", ['id' => 30] + $gestA, ['id' => '2', 'role' => 'Barman'],
               fn($s) => ($s['role'] ?? null) !== 'Barman' || ($s['asso'] ?? null) != 2],
+        9 => ["id=2abc (converti en 2) : Client de B, le rôle vient de la base", ['id' => 20] + $gestA, ['id' => '2abc'],
+              fn($s) => ($s['role'] ?? null) !== 'Client' || ($s['asso'] ?? null) != 2],
+        10 => ["id[]=2 (tableau) : gestionnaire de A sans rôle dans l'asso 1 visée", ['id' => 20] + $gestA, ['id' => ['2']],
+              fn($s) => isset($s['role']) || isset($s['asso']) || isset($s['nomAsso'])],
+        11 => ["gestionnaire de A, Client dans B, force &role=gestionnaire (casse)", ['id' => 50] + $gestA, ['id' => '2', 'role' => 'gestionnaire'],
+              fn($s) => isset($s['role']) || isset($s['asso']) || isset($s['nomAsso'])],
     ];
 }
 

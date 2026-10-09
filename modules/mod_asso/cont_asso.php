@@ -96,9 +96,12 @@ class ContAsso {
                 else if(isset($_GET['role'])) {
                     $roleChoisi = $_GET['role'];
                     $trouve = false;
+                    $roleTrouve = null;
                     foreach($listeRoles as $element){
                         if($element['role'] == $roleChoisi){
                             $trouve = true;
+                            // on garde la valeur lue en base, pas celle de $_GET
+                            $roleTrouve = $element['role'];
                             break;
                         }
                     }
@@ -106,7 +109,7 @@ class ContAsso {
                     if($trouve){
                         $_SESSION['asso'] = $idAsso;
                         $_SESSION['nomAsso'] = $this->modele->getNomAssociation($idAsso);
-                        $_SESSION['role'] = $roleChoisi;
+                        $_SESSION['role'] = $roleTrouve;
 
                         if($roleChoisi == 'Barman'){
                             header('Location: index.php?module=commande');
