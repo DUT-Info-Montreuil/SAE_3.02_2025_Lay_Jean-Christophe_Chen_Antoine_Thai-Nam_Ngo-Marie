@@ -17,6 +17,7 @@ class ContAsso {
     private function quitterAssoc(){
         unset($_SESSION['role']);
         unset($_SESSION['asso']);
+        unset($_SESSION['nomAsso']);
     }
 
     /**
@@ -73,12 +74,13 @@ class ContAsso {
     /**
      * permet d'attribuer un role à un utilisateur dans une association : Gestionnaire, Barman ou client
      * si l'utilisateur n'est jamais aller une association il aura le role Client
+     * l'association et le rôle en session ne sont écrits qu'une fois le rôle validé pour cette association
     */
     public function aAppuyeAsso() {
         if(isset($_GET['id']) && isset($_SESSION['login'])) {
-            $idAsso = $_GET['id'];
-            $_SESSION['asso'] = $idAsso;
-            $_SESSION['nomAsso'] = $this->modele->getNomAssociation($_SESSION['asso']);
+            // on ne garde jamais le rôle ni l'association de l'association précédente
+            $this->quitterAssoc();
+            $idAsso = (int) $_GET['id'];
 
             $idUtilisateur = $_SESSION['id'];
 
@@ -94,15 +96,20 @@ class ContAsso {
                 else if(isset($_GET['role'])) {
                     $roleChoisi = $_GET['role'];
                     $trouve = false;
+                    $roleTrouve = null;
                     foreach($listeRoles as $element){
                         if($element['role'] == $roleChoisi){
                             $trouve = true;
+                            // on garde la valeur lue en base, pas celle de $_GET
+                            $roleTrouve = $element['role'];
                             break;
                         }
                     }
 
                     if($trouve){
-                        $_SESSION['role'] = $roleChoisi;
+                        $_SESSION['asso'] = $idAsso;
+                        $_SESSION['nomAsso'] = $this->modele->getNomAssociation($idAsso);
+                        $_SESSION['role'] = $roleTrouve;
 
                         if($roleChoisi == 'Barman'){
                             header('Location: index.php?module=commande');
@@ -126,6 +133,8 @@ class ContAsso {
                 }
                 else {
                     $roleChoisi = $listeRoles[0]['role'];
+                    $_SESSION['asso'] = $idAsso;
+                    $_SESSION['nomAsso'] = $this->modele->getNomAssociation($idAsso);
                     $_SESSION['role'] = $roleChoisi;
                     if($roleChoisi == 'Barman'){
                         header('Location: index.php?module=commande');
